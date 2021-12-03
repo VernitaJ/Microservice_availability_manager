@@ -1,0 +1,28 @@
+{
+  "timeslots": [
+    {
+      "dentistId": "1",
+      "status": "available",
+      "date": "2021-12-03",
+      "startTime": "09:00",
+      "endTime": "09:30",
+      "dentistWorker": "1"
+    },
+    {
+      "dentistId": "1",
+      "status": "available",
+      "date": "2021-12-03",
+      "startTime": "09:00",
+      "endTime": "09:30",
+      "dentistWorker": "2"
+    },
+    {
+      "dentistId": "1",
+      "status": "available",
+      "date": "2021-12-03",
+      "startTime": "09:00",
+      "endTime": "09:30",
+      "dentistWorker": "3"
+    }
+  ]
+}
