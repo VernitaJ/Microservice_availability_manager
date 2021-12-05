@@ -4,9 +4,11 @@
   "description": "openinghour",
   "main": "main.js",
   "dependencies": {
+    "dayjs": "^1.10.7",
     "dotenv": "^10.0.0",
     "mongodb": "^4.2.1",
-    "mqtt": "^4.2.8"
+    "mqtt": "^4.2.8",
+    "time-slots-finder": "^0.5.2"
   },
   "devDependencies": {},
   "scripts": {
