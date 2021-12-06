@@ -1,5 +1,5 @@
 const TimeSlotsFinder = require("time-slots-finder");
-// const { insertTimeSlots, findTimeSlotByDentistId } = require("./db.js");
+const { insertTimeSlots, findTimeSlotByDentistId } = require("./db.js");
 const dayjs = require("dayjs");
 const { config } = require("dotenv");
 
@@ -52,16 +52,110 @@ const data = {
   ],
 };
 
-var toDate = dayjs()
-  .add(14, "days")
-  .utcOffset(2, true)
-  .startOf("date")
-  .format("YYYY-MM-DDTHH:mm:ss.SSSZ");
-var today = new Date();
-var fromDate = dayjs()
-  .utcOffset(2, true)
-  .startOf("date")
-  .format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+var newClinicTimeSlots = [];
+clinicTimeSlotGenerator();
+insertTimeSlots(newClinicTimeSlots);
+
+function clinicTimeSlotGenerator() {
+  data.dentists.forEach((clinic) => {
+    var periodsConfig = setPeriodsConfig(clinic);
+    createTimeSlotsPerWeekDay(clinic, periodsConfig);
+  });
+}
+
+function createTimeSlotsPerWeekDay(clinic, periodsConfig) {
+  periodsConfig.forEach((weekDayConfig) => {
+    var clinicTimeSlots = createClinicTimeSlots(weekDayConfig);
+    addTimeSlotPerEmployee(clinic, clinicTimeSlots);
+  });
+}
+
+function addTimeSlotPerEmployee(clinic, clinicTimeSlots) {
+  var employeeCount = clinic.dentists;
+  while (employeeCount > 0) {
+    updateTimeSlotPerEmployee(employeeCount, clinic.id, clinicTimeSlots);
+    employeeCount--;
+  }
+}
+
+function updateTimeSlotPerEmployee(employeeCount, clinicId, clinicTimeSlots) {
+  var breaks = defineBreaks(clinicTimeSlots.length);
+  clinicTimeSlots.forEach((timeSlot, counter = 0) => {
+    if (isBreak(counter, breaks)) {
+      updatedTimeSlot = {
+        ...timeSlot,
+        clinicId: clinicId,
+        dentistStaffId: employeeCount,
+        status: "unavailable",
+      };
+    } else {
+      updatedTimeSlot = {
+        ...timeSlot,
+        clinicId: clinicId,
+        dentistStaffId: employeeCount,
+        status: "available",
+      };
+    }
+    counter++;
+    newClinicTimeSlots.push(updatedTimeSlot);
+  });
+}
+
+function isBreak(counter, breaks) {
+  if (counter == breaks[0] || counter == breaks[1] || counter == breaks[3]) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+function defineBreaks(input) {
+  var breaks = [];
+  var lunchA = breaks.push(Math.round(input.length / 2)); // get mid value
+  breaks.push(lunchA - 1); // get mid value
+  breaks.push(Math.round(input.length * 0.75));
+  return breaks;
+}
+
+function setPeriodsConfig(clinic) {
+  var periodsConfiguration = [];
+  for (const [key, value] of Object.entries(clinic.openinghours)) {
+    var day = key;
+    var isoWeekDay = translateWeekDayStringToISOWeekDay(day);
+    var startTime = addLeadingZero(value.split("-")[0]);
+    var endTime = value.split("-")[1];
+    var shifts = [{ startTime, endTime }];
+    periodsConfiguration.push({
+      isoWeekDay,
+      shifts: shifts,
+    });
+  }
+  return periodsConfiguration;
+}
+
+function createClinicTimeSlots(periodsConfiguration) {
+  var toDate = dayjs()
+    .add(14, "days")
+    .utcOffset(2, true)
+    .startOf("date")
+    .format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+  var fromDate = dayjs()
+    .utcOffset(2, true)
+    .startOf("date")
+    .format("YYYY-MM-DDTHH:mm:ss.SSSZ");
+  var clinicTimeSlots = [];
+  var clinicTimeSlots = TimeSlotsFinder.getAvailableTimeSlotsInCalendar({
+    configuration: {
+      timeSlotDuration: 30,
+      availablePeriods: [periodsConfiguration],
+      slotStartMinuteStep: 1,
+      timeZone: "Europe/Stockholm",
+    },
+    from: dayjs(fromDate).toDate(),
+    to: dayjs(toDate).toDate(),
+  });
+  return clinicTimeSlots;
+}
 
 function translateWeekDayStringToISOWeekDay(weekDayString) {
   switch (weekDayString) {
@@ -90,105 +184,3 @@ function addLeadingZero(time) {
   }
   return time;
 }
-
-function createTimeSlots() {
-  var newDentistClinicTimeSlots = [];
-  var denstistClinicTimeSlots = [];
-  for (dentistClinic of data.dentists) {
-    var availablePeriodsConfig = // Sets available the config needed for createDentistClinicTimeSlot()
-      setAvailablePeriodsConfig(dentistClinic); 
-      availablePeriodsConfig.forEach((weekDayConfig) => {  
-        // Loop through each configuration to know how many timeSlots are created for each day.
-    var dentistClinicTimeSlots = createDentistClinicTimeSlots(weekDayConfig); // Input one day at a time
-      console.log(dentistClinicTimeSlots.length) 
-        var lunchA = dentistClinicTimeSlots[dentistClinicTimeSlots/2] // get mid value
-        var lunchB = dentistClinicTimeSlots[(dentistClinicTimeSlots/2)-1] // get mid value 
-        var fika = dentistClinicTimeSlots[Math.floor(dentistClinicTimeSlots*0.75)]
-        // get 75 percentile value
-      dentistClinicTimeSlots.forEach((timeSlot) => {
-        // Manipulate object to add additional info
-        
-        // if index = midvalue then status = "booked"
-        // if index = fikavalue then status = "booked"
-        var dentistStaffCount = dentistClinic.dentists;
-        var counter = 0;
-        (counter = (lunchA || lunchB || fika)) ? {
-          timeSlot = {
-            ...timeSlot,
-            dentistClinicId: dentistClinic.id,
-            dentistStaffId: dentistStaffCount,
-            status: "unavailable",
-          }
-        } :
-        timeSlot = {
-          ...timeSlot,
-          dentistClinicId: dentistClinic.id,
-          dentistStaffId: dentistStaffCount,
-          status: "available",
-        };
-        dentistStaffCount--;
-        counter++;
-        newDentistClinicTimeSlots.push(timeSlot);
-      });
-    })
-  }
-  // add rows to database
-  //console.log(newDentistClinicTimeSlots);
-}
-
-/*
-total 8hours = 16 timeslots = 1 dentist/day
-
-
-{
-  dentistClinicId: 1,
-  dentistStaffId: 3,
-  timeSlots: [{
-    startAt: 2021-12-14T09:30:00.000Z,
-    endAt: 2021-12-14T10:00:00.000Z,
-    duration: 30,
-    status: 'available'
-  },
-]}
-
- availablePeriodsConfiguration.forEach((entry)=> {
-    var dentistClinicTimeSlot = createDentistClinicTimeSlots(entry);
-    denstistClinicTimeSlots.push(dentistClinicTimeSlot)
-      console.log(dentistClinicTimeSlot.length)
-    })
-
-    denstistClinicTimeslots
-en dag i sänder.
-
-*/
-
-function setAvailablePeriodsConfig(dentistClinic) {
-  var availablePeriodsConfiguration = [];
-  for (const [key, value] of Object.entries(dentistClinic.openinghours)) {
-    var day = key;
-    var isoWeekDay = translateWeekDayStringToISOWeekDay(day);
-    var startTime = addLeadingZero(value.split("-")[0]);
-    var endTime = value.split("-")[1];
-    var shifts = [{ startTime, endTime }];
-    availablePeriodsConfiguration.push({
-      isoWeekDay,
-      shifts: shifts,
-    });
-  }
-  return availablePeriodsConfiguration;
-}
-
-function createDentistClinicTimeSlots(availablePeriodsConfiguration) {
-  var dentistClinicTimeSlots = [];
-  var dentistClinicTimeSlots = TimeSlotsFinder.getAvailableTimeSlotsInCalendar({
-    configuration: {
-      timeSlotDuration: 30,
-      availablePeriods: [availablePeriodsConfiguration],
-      timeZone: "Europe/Stockholm",
-    },
-    from: dayjs(fromDate).toDate(),
-    to: dayjs(toDate).toDate(),
-  });
-  return dentistClinicTimeSlots;
-}
-createTimeSlots();
