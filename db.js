@@ -1,21 +1,19 @@
 require("dotenv").config();
 const { MongoClient } = require("mongodb");
-// const mongoURL = `mongodb://mongodb:${process.env.MONGODB_DOCKER_PORT}`;
-const mongoURL = `mongodb://localhost:${process.env.MONGODB_DOCKER_PORT}`;
+const mongoURL = `mongodb://mongodb:${process.env.MONGODB_DOCKER_PORT}`;
+// const mongoURL = `mongodb://localhost:${process.env.MONGODB_DOCKER_PORT}`;
 //   incase of use without docker.
 
 const client = new MongoClient(mongoURL);
+const dbName = "availabilityDB";
 
 // Use create time slots result as parameter
 async function insertMany(timeslots) {
   await client.connect();
   console.log("Connected successfully to server");
 
-  const collection = client.db("availabilityDB").collection("timeslot");
-  const insertResult = await collection.insertMany(timeslots);
-  console.log("Inserted documents =>", insertResult);
-
-  return "Success";
+  const collection = client.db(dbName).collection("timeslot");
+  await collection.insertMany(timeslots);
 }
 
 function insertTimeSlots(timeslots) {
@@ -25,22 +23,20 @@ function insertTimeSlots(timeslots) {
     .finally(() => client.close());
 }
 
-// use dentistId as parameter
-async function find(dentistId) {
+async function find(clinicId) {
   await client.connect();
   console.log("Connected successfully to server");
 
-  const collection = client.db("availability").collection("timeslot");
-  const findResult = await collection.find({ dentistId: dentistId }).toArray();
+  const collection = client.db(dbName).collection("timeslot");
+  const findResult = await collection.find({ clinicId: clinicId }).toArray();
   console.log("Found documents =>", findResult);
-  return "Success";
+  return findResult;
 }
 
-function findTimeSlotByDentistId(dentistId) {
-  find(dentistId)
-    .then(console.log)
+function findTimeSlotByClinicId(dentistId) {
+  return find(dentistId)
     .catch(console.error)
     .finally(() => client.close());
 }
 
-module.exports = { insertTimeSlots, findTimeSlotByDentistId };
+module.exports = { insertTimeSlots, findTimeSlotByClinicId };

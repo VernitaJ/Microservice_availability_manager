@@ -1,66 +1,18 @@
 const TimeSlotsFinder = require("time-slots-finder");
-const { insertTimeSlots, findTimeSlotByDentistId } = require("./db.js");
+const { insertTimeSlots } = require("./db.js");
 const dayjs = require("dayjs");
 const { config } = require("dotenv");
 
-const data = {
-  dentists: [
-    {
-      id: 1,
-      dentists: 3,
-      openinghours: {
-        monday: "9:00-17:00",
-        tuesday: "8:00-17:00",
-        wednesday: "7:00-16:00",
-        thursday: "9:00-17:00",
-        friday: "9:00-15:00",
-      },
-    },
-    {
-      id: 2,
-      dentists: 1,
-      openinghours: {
-        monday: "7:00-19:00",
-        tuesday: "7:00-19:00",
-        wednesday: "7:00-19:00",
-        thursday: "7:00-19:00",
-        friday: "7:00-19:00",
-      },
-    },
-    {
-      id: 3,
-      dentists: 2,
-      openinghours: {
-        monday: "6:00-15:00",
-        tuesday: "8:00-17:00",
-        wednesday: "7:00-12:00",
-        thursday: "7:00-17:00",
-        friday: "8:00-16:00",
-      },
-    },
-    {
-      id: 4,
-      dentists: 3,
-      openinghours: {
-        monday: "10:00-18:00",
-        tuesday: "10:00-18:00",
-        wednesday: "10:00-18:00",
-        thursday: "10:00-18:00",
-        friday: "10:00-18:00",
-      },
-    },
-  ],
-};
-
 var newClinicTimeSlots = [];
-clinicTimeSlotGenerator();
-insertTimeSlots(newClinicTimeSlots);
 
-function clinicTimeSlotGenerator() {
-  data.dentists.forEach((clinic) => {
+function clinicTimeSlotGenerator(message) {
+  var data = [];
+  data.push(JSON.parse(message));
+  data.forEach((clinic) => {
     var periodsConfig = setPeriodsConfig(clinic);
     createTimeSlotsPerWeekDay(clinic, periodsConfig);
   });
+  insertTimeSlots(newClinicTimeSlots);
 }
 
 function createTimeSlotsPerWeekDay(clinic, periodsConfig) {
@@ -184,3 +136,5 @@ function addLeadingZero(time) {
   }
   return time;
 }
+
+module.exports = { clinicTimeSlotGenerator };
