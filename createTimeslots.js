@@ -1,6 +1,7 @@
 const TimeSlotsFinder = require("time-slots-finder");
 // const { insertTimeSlots, findTimeSlotByDentistId } = require("./db.js");
 const dayjs = require("dayjs");
+const { config } = require("dotenv");
 
 const data = {
   dentists: [
@@ -92,30 +93,76 @@ function addLeadingZero(time) {
 
 function createTimeSlots() {
   var newDentistClinicTimeSlots = [];
+  var denstistClinicTimeSlots = [];
   for (dentistClinic of data.dentists) {
-    var availablePeriodsConfiguration =
-      setAvailablePeriodsConfiguration(dentistClinic);
-    dentistClinicTimeSlots = createDentistClinicTimeSlots(
-      availablePeriodsConfiguration
-    );
-    dentistClinicTimeSlots.forEach((timeSlot) => {
-      var dentistStaffCount = dentistClinic.dentists;
-      timeSlot = {
-        ...timeSlot,
-        dentistClinicId: dentistClinic.id,
-        dentistStaffId: dentistStaffCount,
-        status: "available",
-      };
-      dentistStaffCount--;
-      newDentistClinicTimeSlots.push(timeSlot);
-    });
+    var availablePeriodsConfig = // Sets available the config needed for createDentistClinicTimeSlot()
+      setAvailablePeriodsConfig(dentistClinic); 
+      availablePeriodsConfig.forEach((weekDayConfig) => {  
+        // Loop through each configuration to know how many timeSlots are created for each day.
+    var dentistClinicTimeSlots = createDentistClinicTimeSlots(weekDayConfig); // Input one day at a time
+      console.log(dentistClinicTimeSlots.length) 
+        var lunchA = dentistClinicTimeSlots[dentistClinicTimeSlots/2] // get mid value
+        var lunchB = dentistClinicTimeSlots[(dentistClinicTimeSlots/2)-1] // get mid value 
+        var fika = dentistClinicTimeSlots[Math.floor(dentistClinicTimeSlots*0.75)]
+        // get 75 percentile value
+      dentistClinicTimeSlots.forEach((timeSlot) => {
+        // Manipulate object to add additional info
+        
+        // if index = midvalue then status = "booked"
+        // if index = fikavalue then status = "booked"
+        var dentistStaffCount = dentistClinic.dentists;
+        var counter = 0;
+        (counter = (lunchA || lunchB || fika)) ? {
+          timeSlot = {
+            ...timeSlot,
+            dentistClinicId: dentistClinic.id,
+            dentistStaffId: dentistStaffCount,
+            status: "unavailable",
+          }
+        } :
+        timeSlot = {
+          ...timeSlot,
+          dentistClinicId: dentistClinic.id,
+          dentistStaffId: dentistStaffCount,
+          status: "available",
+        };
+        dentistStaffCount--;
+        counter++;
+        newDentistClinicTimeSlots.push(timeSlot);
+      });
+    })
   }
   // add rows to database
+  //console.log(newDentistClinicTimeSlots);
 }
 
-createTimeSlots();
+/*
+total 8hours = 16 timeslots = 1 dentist/day
 
-function setAvailablePeriodsConfiguration(dentistClinic) {
+
+{
+  dentistClinicId: 1,
+  dentistStaffId: 3,
+  timeSlots: [{
+    startAt: 2021-12-14T09:30:00.000Z,
+    endAt: 2021-12-14T10:00:00.000Z,
+    duration: 30,
+    status: 'available'
+  },
+]}
+
+ availablePeriodsConfiguration.forEach((entry)=> {
+    var dentistClinicTimeSlot = createDentistClinicTimeSlots(entry);
+    denstistClinicTimeSlots.push(dentistClinicTimeSlot)
+      console.log(dentistClinicTimeSlot.length)
+    })
+
+    denstistClinicTimeslots
+en dag i sänder.
+
+*/
+
+function setAvailablePeriodsConfig(dentistClinic) {
   var availablePeriodsConfiguration = [];
   for (const [key, value] of Object.entries(dentistClinic.openinghours)) {
     var day = key;
@@ -136,7 +183,7 @@ function createDentistClinicTimeSlots(availablePeriodsConfiguration) {
   var dentistClinicTimeSlots = TimeSlotsFinder.getAvailableTimeSlotsInCalendar({
     configuration: {
       timeSlotDuration: 30,
-      availablePeriods: [...availablePeriodsConfiguration],
+      availablePeriods: [availablePeriodsConfiguration],
       timeZone: "Europe/Stockholm",
     },
     from: dayjs(fromDate).toDate(),
@@ -144,3 +191,4 @@ function createDentistClinicTimeSlots(availablePeriodsConfiguration) {
   });
   return dentistClinicTimeSlots;
 }
+createTimeSlots();
