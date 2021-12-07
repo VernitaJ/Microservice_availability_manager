@@ -1,7 +1,7 @@
-const { runMqtt } = require("./mqtt");
+//const { runMqtt } = require("./mqtt");
 //const { findTimeSlotByClinicId } = require("./db");
 
-runMqtt();
+//runMqtt();
 
 // clinicTimeSlotGenerator();
 

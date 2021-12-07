@@ -1,19 +1,19 @@
 const TimeSlotsFinder = require("time-slots-finder");
-const { insertTimeSlots } = require("./db.js");
+// const { insertTimeSlots } = require("./db.js");
 const dayjs = require("dayjs");
-const { config } = require("dotenv");
+const timeSlotModel = require("./models/timeSlot");
 
 var newClinicTimeSlots = [];
 
-function clinicTimeSlotGenerator(message) {
-  var data = [];
-  data.push(JSON.parse(message));
-  data.forEach((clinic) => {
-    var periodsConfig = setPeriodsConfig(clinic);
-    createTimeSlotsPerWeekDay(clinic, periodsConfig);
-  });
+module.exports = function clinicTimeSlotGenerator(message) {
+  // We decided to only take ONE input at a time AS THAT IS WHAT IS BEING SENT!
+  const parsedMessage = JSON.parse(message);
+  const clinic = parsedMessage.openingHours;
+  var periodsConfig = setPeriodsConfig(clinic);
+  createTimeSlotsPerWeekDay(clinic, periodsConfig);
   insertTimeSlots(newClinicTimeSlots);
-}
+  newClinicTimeSlots = [];
+};
 
 function createTimeSlotsPerWeekDay(clinic, periodsConfig) {
   periodsConfig.forEach((weekDayConfig) => {
@@ -71,7 +71,7 @@ function defineBreaks(input) {
 
 function setPeriodsConfig(clinic) {
   var periodsConfiguration = [];
-  for (const [key, value] of Object.entries(clinic.openinghours)) {
+  for (const [key, value] of Object.entries(clinic.openingHours)) {
     var day = key;
     var isoWeekDay = translateWeekDayStringToISOWeekDay(day);
     var startTime = addLeadingZero(value.split("-")[0]);
@@ -109,6 +109,36 @@ function createClinicTimeSlots(periodsConfiguration) {
   return clinicTimeSlots;
 }
 
+const insertTimeSlots = (timeSlots) => {
+  timeSlotModel.insertMany(timeSlots, (err, docs) => {
+    if (err) {
+      console.log(err);
+    }
+  });
+};
+
+//   try {
+//     const timeSlotObj = {
+//       startAt: timeSlot.startAt,
+//       endAt: timeSlot.endAt,
+//       duration: timeSlot.duration,
+//       clinicId: timeSlot.clinicId,
+//       dentistStaffId: timeSlot.dentistStaffId,
+//       status: timeSlot.status,
+//     };
+//     const newTimeSlot = new timeSlotModel(timeSlotObj);
+//     newTimeSlot
+//       .save()
+//       .then((timeSlot) => {
+//         console.log(`timeSlot saved: ${timeSlot}`);
+//       })
+//       .catch((err) => console.log(err));
+//   } catch (err) {
+//     console.log(`Error inserting timeSlot: ${error}`);
+//     return;
+//   }
+// };
+
 function translateWeekDayStringToISOWeekDay(weekDayString) {
   switch (weekDayString) {
     case "monday":
@@ -136,5 +166,3 @@ function addLeadingZero(time) {
   }
   return time;
 }
-
-module.exports = { clinicTimeSlotGenerator };

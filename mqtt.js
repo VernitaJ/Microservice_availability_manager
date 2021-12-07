@@ -1,45 +1,44 @@
-function runMqtt() {
-  require("dotenv").config();
-  const mqtt = require("mqtt");
-  const { clinicTimeSlotGenerator } = require("./createTimeslots");
+require("dotenv").config();
+const mqtt = require("mqtt");
+const mongoose = require("mongoose");
+//const { clinicTimeSlotGenerator } = require("./createTimeslots");
+const requestEvaluator = require("./requestEvaluator");
+const brokerURI = `mqtt://host.docker.internal:${process.env.BROKER_PORT}`;
+//const brokerURI = `mqtt://broker:${process.env.BROKER_PORT}`;
 
-  const brokerURI = `mqtt://host.docker.internal:${process.env.BROKER_PORT}`;
-  //const brokerURI = `mqtt://broker:${process.env.BROKER_PORT}`;
-  const topics = ["dentist/openinghour", "dentistimo/booking/availability/req"];
+const mongoURI = `mongodb://mongodb:${process.env.MONGODB_DOCKER_PORT}`;
 
-  const client = mqtt.connect(brokerURI, {
-    clientId: "availability_checker",
-    username: process.env.BROKER_USERNAME,
-    password: process.env.BROKER_PASSWORD,
-  });
+const mqttClient = mqtt.connect(brokerURI, {
+  clientId: "availability_service",
+  username: process.env.BROKER_USERNAME,
+  password: process.env.BROKER_PASSWORD,
+});
 
-  client.on("connect", () => {
-    client.subscribe(topics, (err) => {
-      if (!err) {
-        console.log(`Successfully connected to ${topics}`);
-      } else {
-        console.log(err);
-      }
-    });
-  });
-
-  client.on("message", (topic, message) => {
-    console.log(topic);
-    console.log(message);
-    if (topic === topics[0]) {
-      console.log("Time to import the data!");
-      console.log(message.toString());
-      clinicTimeSlotGenerator(message.toString());
-      // Handle response with import data
-    } else if (topic === topics[1]) {
-      // var responseData = findTimeSlotByClinicId(1);
-      // console.log(responseData);
-      // handle request to answer with data
-      // handleFrontendRequest(message.toString(), mqttClient)
+mqttClient.on("connect", () => {
+  mqttClient.subscribe("dentist/openinghour", (err) => {
+    if (err) {
+      console.log("Failed to connect dentist/openinghour", err);
     }
-    console.log(message.toString());
-    client.end();
   });
-}
+  mqttClient.subscribe("dentistimo/booking/availability/req", (err) => {
+    if (err) {
+      console.log("Failed to connect dentistimo/booking/availability/req", err);
+    }
+  });
+});
 
-exports.runMqtt = runMqtt;
+// Connect to MongoDB
+mongoose.connect(
+  mongoURI,
+  { useNewUrlParser: true, useUnifiedTopology: true },
+  function (err) {
+    if (err) {
+      console.error(`Failed to connect to MongoDB with URI: ${mongoURI}`);
+      console.error(err.stack);
+      process.exit(1);
+    }
+    console.log(`Connected to MongoDB with URI: ${mongoURI}`);
+  }
+);
+
+requestEvaluator(mqttClient);

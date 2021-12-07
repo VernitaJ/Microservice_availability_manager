@@ -1,7 +1,7 @@
 version: "3.8"
 
 services:
-  mongodbAvailability:
+  mongodb:
     image: mongo:5.0.2
     restart: unless-stopped
     env_file: ./.env
@@ -11,8 +11,9 @@ services:
       - db:/data/db
   app:
     depends_on:
-      - mongodbAvailability
+      - mongodb
     build: ./
+    restart: unless-stopped
     env_file: ./.env
     ports:
       - $NODE_LOCAL_PORT:$NODE_DOCKER_PORT

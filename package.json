@@ -7,13 +7,14 @@
     "dayjs": "^1.10.7",
     "dotenv": "^10.0.0",
     "mongodb": "^4.2.1",
+    "mongoose": "^6.1.0",
     "mqtt": "^4.2.8",
     "time-slots-finder": "^0.5.2"
   },
   "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./main.js"
+    "start": "node ./mqtt.js"
   },
   "repository": {
     "type": "git",
