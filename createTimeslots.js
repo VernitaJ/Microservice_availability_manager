@@ -6,7 +6,6 @@ const timeSlotModel = require("./models/timeSlot");
 var newClinicTimeSlots = [];
 
 module.exports = function clinicTimeSlotGenerator(message) {
-  // We decided to only take ONE input at a time AS THAT IS WHAT IS BEING SENT!
   const parsedMessage = JSON.parse(message);
   const clinic = parsedMessage.openingHours;
   var periodsConfig = setPeriodsConfig(clinic);
@@ -113,6 +112,8 @@ const insertTimeSlots = (timeSlots) => {
   timeSlotModel.insertMany(timeSlots, (err, docs) => {
     if (err) {
       console.log(err);
+    } else {
+      console.log(docs);
     }
   });
 };
