@@ -10,10 +10,7 @@ module.exports = frontendRequestHandler = async (req, mqttClient) => {
       response: "invalid request type",
     });
   }
-  mqttClient.publish(
-    `dentistimo/booking/availability/${request.requestId}/res`,
-    response
-  );
+  mqttClient.publish(`frontend/timeslot/${message.requestId}/res`, response);
 };
 
 const getTimeSlots = async (clinicId) => {

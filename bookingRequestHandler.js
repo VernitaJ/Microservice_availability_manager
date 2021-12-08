@@ -15,7 +15,10 @@ module.exports = bookingRequestHandler = async (req, mqttClient) => {
       response: "bad request",
     });
   }
-  mqttClient.publish(`frontend/timeslot/${message.requestId}/res`, response);
+  mqttClient.publish(
+    `dentistimo/booking/availability/${request.requestId}/res`,
+    response
+  );
 };
 
 const getTimeSlot = async (request) => {
