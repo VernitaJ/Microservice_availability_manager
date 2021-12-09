@@ -5,13 +5,12 @@ module.exports = bookingRequestHandler = async (req, mqttClient) => {
   if (request) {
     var response = "";
     if (!request.requestId) {
-      response = JSON.stringify({ status: 400, response: "bad request" });
+      response = JSON.stringify({ response: "bad request" });
     } else {
       response = await getTimeSlot(request);
     }
   } else {
     response = JSON.stringify({
-      status: 400,
       response: "bad request",
     });
   }

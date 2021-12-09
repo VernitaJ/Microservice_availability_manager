@@ -1,11 +1,9 @@
 require("dotenv").config();
 const mqtt = require("mqtt");
 const mongoose = require("mongoose");
-//const { clinicTimeSlotGenerator } = require("./createTimeslots");
 const requestEvaluator = require("./requestEvaluator");
-const brokerURI = `mqtt://host.docker.internal:${process.env.BROKER_PORT}`;
-//const brokerURI = `mqtt://broker:${process.env.BROKER_PORT}`;
 
+const brokerURI = `mqtt://host.docker.internal:${process.env.BROKER_PORT}`;
 const mongoURI = `mongodb://mongodb:${process.env.MONGODB_DOCKER_PORT}`;
 
 const mqttClient = mqtt.connect(brokerURI, {

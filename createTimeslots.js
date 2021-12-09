@@ -1,5 +1,4 @@
 const TimeSlotsFinder = require("time-slots-finder");
-// const { insertTimeSlots } = require("./db.js");
 const dayjs = require("dayjs");
 const timeSlotModel = require("./models/timeSlot");
 
@@ -117,28 +116,6 @@ const insertTimeSlots = (timeSlots) => {
     }
   });
 };
-
-//   try {
-//     const timeSlotObj = {
-//       startAt: timeSlot.startAt,
-//       endAt: timeSlot.endAt,
-//       duration: timeSlot.duration,
-//       clinicId: timeSlot.clinicId,
-//       dentistStaffId: timeSlot.dentistStaffId,
-//       status: timeSlot.status,
-//     };
-//     const newTimeSlot = new timeSlotModel(timeSlotObj);
-//     newTimeSlot
-//       .save()
-//       .then((timeSlot) => {
-//         console.log(`timeSlot saved: ${timeSlot}`);
-//       })
-//       .catch((err) => console.log(err));
-//   } catch (err) {
-//     console.log(`Error inserting timeSlot: ${error}`);
-//     return;
-//   }
-// };
 
 function translateWeekDayStringToISOWeekDay(weekDayString) {
   switch (weekDayString) {
