@@ -1,0 +1,25 @@
+{
+  "name": "availability-checker",
+  "version": "1.0.0",
+  "description": "openinghour",
+  "main": "main.js",
+  "dependencies": {
+    "dayjs": "^1.10.7",
+    "dotenv": "^10.0.0",
+    "mongodb": "^4.2.1",
+    "mongoose": "^6.1.0",
+    "mqtt": "^4.2.8",
+    "time-slots-finder": "^0.5.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./mqtt.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git.chalmers.se:courses/dit355/test-teams-formation/team-9/Availability-Checker.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
