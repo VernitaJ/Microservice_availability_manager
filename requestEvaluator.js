@@ -1,6 +1,6 @@
 const clinicTimeSlotGenerator = require("./createTimeslots.js");
 const handleBookingRequest = require("./bookingRequestHandler.js");
-const handleFrontendRequest = require("./frontEndRequestHandler.js");
+const handleFrontendRequest = require("./frontendRequestHandler.js");
 
 module.exports = requestEvaluator = (mqttClient) => {
   mqttClient.on("message", (topic, message) => {
