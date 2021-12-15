@@ -10,7 +10,7 @@ module.exports = frontendRequestHandler = async (req, mqttClient) => {
       response: "invalid request type",
     });
   }
-  mqttClient.publish(`frontend/timeslot/${message.requestId}/res`, response);
+  mqttClient.publish(`frontend/timeslot/${request.requestId}/res`, response);
 };
 
 const getTimeSlots = async (clinicId) => {
