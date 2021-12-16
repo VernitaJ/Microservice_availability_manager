@@ -9,7 +9,7 @@ A micro service to create, store and manage available time-slots using NodeJS, M
 
 ## Request from Frontend Template
 
-#### MQTT Request Topic -> _"frontend/dentist/req"_
+#### MQTT Request Topic -> _"frontend/timeslot/req"_
 
 ```JSON
 {
