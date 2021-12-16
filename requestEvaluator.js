@@ -7,9 +7,8 @@ module.exports = requestEvaluator = (mqttClient) => {
     if (topic === "dentist/openinghour") {
       clinicTimeSlotGenerator(message.toString());
     } else if (topic === "dentistimo/booking/availability/req") {
-      console.log(message.toString());
       handleBookingRequest(message.toString(), mqttClient);
-    } else if (topic === "frontend/timeslot") {
+    } else if (topic === "frontend/timeslot/req") {
       handleFrontendRequest(message.toString(), mqttClient);
     }
   });

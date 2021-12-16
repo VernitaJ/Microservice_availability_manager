@@ -23,7 +23,7 @@ mqttClient.on("connect", () => {
       console.log("Failed to connect dentistimo/booking/availability/req", err);
     }
   });
-  mqttClient.subscribe("frontend/timeslot", (err) => {
+  mqttClient.subscribe("frontend/timeslot/req", (err) => {
     if (err) {
       console.log("Failed to connect frontend/timeslot/req", err);
     }
