@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const requestEvaluator = require("./requestEvaluator");
 
 const brokerURI = `mqtt://host.docker.internal:${process.env.BROKER_PORT}`;
-const mongoURI = `mongodb://mongodb:${process.env.MONGODB_DOCKER_PORT}`;
+const mongoURI = `mongodb://mongodb:${process.env.MONGODB_DOCKER_PORT}/availabilityDB`;
 
 const mqttClient = mqtt.connect(brokerURI, {
   clientId: "availability_service",
