@@ -29,8 +29,10 @@ function addTimeSlotPerEmployee(clinic, clinicTimeSlots) {
 }
 
 function updateTimeSlotPerEmployee(employeeCount, clinicId, clinicTimeSlots) {
+ // var breakInterval = clinicTimeSlots.length / employeeCount;
   var breaks = defineBreaks(clinicTimeSlots.length);
-  clinicTimeSlots.forEach((timeSlot, counter = 0) => {
+  clinicTimeSlots.forEach((timeSlot, counter = 1) => {
+    var updatedTimeSlot = {};
     if (isBreak(counter, breaks)) {
       updatedTimeSlot = {
         ...timeSlot,
@@ -61,9 +63,12 @@ function isBreak(counter, breaks) {
 
 function defineBreaks(input) {
   var breaks = [];
-  var lunchA = breaks.push(Math.round(input.length / 2)); // get mid value
-  breaks.push(lunchA - 1); // get mid value
-  breaks.push(Math.round(input.length * 0.75));
+  var lunchA = Math.round(input / 2);
+  var lunchB = lunchA -1;
+  var fikaBreak = Math.round(input * 0.75);
+  breaks.push(lunchA);
+  breaks.push(lunchB);
+  breaks.push(fikaBreak);
   return breaks;
 }
 
@@ -85,12 +90,12 @@ function setPeriodsConfig(clinic) {
 
 function createClinicTimeSlots(periodsConfiguration) {
   var toDate = dayjs()
-    .add(14, "days")
-    .utcOffset(2, true)
+    .add(15, "days")
+ //   .utcOffset(2, true)
     .startOf("date")
     .format("YYYY-MM-DDTHH:mm:ss.SSSZ");
   var fromDate = dayjs()
-    .utcOffset(2, true)
+ //   .utcOffset(2, true)
     .startOf("date")
     .format("YYYY-MM-DDTHH:mm:ss.SSSZ");
   var clinicTimeSlots = [];
@@ -99,7 +104,8 @@ function createClinicTimeSlots(periodsConfiguration) {
       timeSlotDuration: 30,
       availablePeriods: [periodsConfiguration],
       slotStartMinuteStep: 1,
-      timeZone: "Europe/Stockholm",
+      //timeZone: "Europe/Stockholm",
+      timeZone: "Africa/Abidjan",
     },
     from: dayjs(fromDate).toDate(),
     to: dayjs(toDate).toDate(),
