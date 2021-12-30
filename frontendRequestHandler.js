@@ -13,6 +13,21 @@ module.exports = frontendRequestHandler = async (req, mqttClient) => {
   mqttClient.publish(`frontend/timeslot/${request.requestId}/res`, response);
 };
 
+const getMaxTimeSlotDate = async (clinicId) => {
+  return await timeSlotModel
+    .find({ clinicId: clinicId })
+    .sort({ endAt: -1 })
+    .limit(1)
+    .then((result) => {
+      if (result === null) {
+        return null;
+      } else {
+        return result[0].endAt;
+      }
+    })
+    .catch((err) => null);
+};
+
 const getTimeSlots = async (clinicId) => {
   return await timeSlotModel
     .find({ clinicId: clinicId })

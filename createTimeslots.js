@@ -1,149 +1,107 @@
-const TimeSlotsFinder = require("time-slots-finder");
 const dayjs = require("dayjs");
 const timeSlotModel = require("./models/timeSlot");
 
-var newClinicTimeSlots = [];
-
 module.exports = function clinicTimeSlotGenerator(message) {
-  const parsedMessage = JSON.parse(message);
-  const clinic = parsedMessage.openingHours;
-  if(clinic.id === 2){
-  createTimeSlotsPerWeekDay(clinic);
-  insertTimeSlots(newClinicTimeSlots);
-  newClinicTimeSlots = [];
-}
+  const data = JSON.parse(message);
+  const clinic = data.openingHours;
+  const duration = setDateDuration(0, 60);
+  var timeSlots = generateTimeSlots(clinic, duration);
+  insertTimeSlots(timeSlots);
+  var timeSlots = [];
 };
 
-function createTimeSlotsPerWeekDay(clinic) {
-  const weekDays = ["monday", "tuesday", "wednesday", "thursday", "friday"];
-  weekDays.forEach((weekDay) => {
-    var config = setPeriodConfig(clinic.openingHours[weekDay], weekDay);
-    var clinicTimeSlots = createClinicTimeSlots(config);
-    updateTimeSlot(clinic.id, clinicTimeSlots)
-    if(clinic.id === 2)
-      console.log(clinicTimeSlots)
-  });
-}
+function generateTimeSlots(clinic, duration) {
+  var timeSlots = [];
+  const timeSlotDuration = 30;
+  for (var dentistId = 1; dentistId <= clinic.dentists; dentistId++) {
+    while (dayjs(duration.startDate).isBefore(duration.endDate)) {
+      if (
+        dayjs(duration.startDate).day() == 0 ||
+        dayjs(duration.startDate).day() == 6
+      ) {
+        duration.startDate = dayjs(duration.startDate).add(1, "day");
+      } else {
+        var dayTimeSlots = [];
+        var day = dayjs(duration.startDate).format("dddd").toLowerCase();
+        var startTime = addLeadingZero(
+          clinic.openingHours[day].split("-")[0]
+        ).slice(0, 2);
+        var endTime = clinic.openingHours[day].split("-")[1].slice(0, 2);
+        var openTime = dayjs(duration.startDate)
+          .hour(startTime)
+          .format(`YYYY-MM-DDTHH:mm:ss.SSSZ`);
+        var closeTime = dayjs(duration.startDate)
+          .hour(endTime)
+          .format(`YYYY-MM-DDTHH:mm:ss.SSSZ`);
 
-function addTimeSlotPerEmployee(clinic, clinicTimeSlots) {
-  var employeeCount = clinic.dentists;
-  while (employeeCount > 0) {
-    updateTimeSlotPerEmployee(employeeCount, clinic.id, clinicTimeSlots);
-    employeeCount--;
+        var totalTimeSlots = endTime - startTime;
+        var breaks = [];
+        breaks.push(scheduleFika(totalTimeSlots, openTime));
+        if (totalTimeSlots > 5) {
+          breaks.push(...scheduleLunch(totalTimeSlots, openTime));
+        }
+
+        while (dayjs(openTime).isBefore(closeTime)) {
+          var timeSlot = {
+            startAt: dayjs(openTime).format(`YYYY-MM-DDTHH:mm:ss.SSSZ`),
+            endAt: dayjs(openTime)
+              .add(timeSlotDuration, "minutes")
+              .format(`YYYY-MM-DDTHH:mm:ss.SSSZ`),
+            duration: timeSlotDuration,
+            clinicId: clinic.id,
+            dentistStaffId: dentistId,
+            status: isBreak(openTime, breaks) ? "unavailable" : "available",
+          };
+          dayTimeSlots.push(timeSlot);
+          openTime = dayjs(openTime).add(timeSlotDuration, "minutes");
+        }
+        timeSlots.push(...dayTimeSlots);
+        dayTimeSlots = [];
+        duration.startDate = dayjs(duration.startDate).add(1, "days");
+      }
+    }
+    return timeSlots;
   }
 }
 
-function updateTimeSlot(clinicId, clinicTimeSlots) {
-  console.log("update time slots: ", clinicTimeSlots.length)
-  var breaks = defineBreaks(clinicTimeSlots);
-  clinicTimeSlots.forEach((timeSlot, counter = 0) => {
-    var updatedTimeSlot = {};
-    if (isBreak(counter, breaks)) {
-      updatedTimeSlot = {
-        ...timeSlot,
-        clinicId: clinicId,
-        dentistStaffId: 1,
-        status: "unavailable",
-      };
-    } else {
-      updatedTimeSlot = {
-        ...timeSlot,
-        clinicId: clinicId,
-        dentistStaffId: 1,
-        status: "available",
-      };
-    }
-    counter++;
-    newClinicTimeSlots.push(updatedTimeSlot);
-  });
-}
-
-function isBreak(counter, breaks) {
-  if (counter == breaks[0] || counter == breaks[1] || counter == breaks[3]) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-function defineBreaks(input) {
-  console.log("input: ", input)
-  var breaks = [];
-  var lunchA = Math.round(input / 2); 
-  var lunchB = lunchA -1; 
-  var fikaBreak = Math.round(input * 0.75); 
-  breaks.push(lunchA);
-  breaks.push(lunchB);
-  breaks.push(fikaBreak);
-  console.log("breaks"+breaks)
-  return breaks;
-}
-
-function setPeriodConfig(openingHours, weekDay) {
-    var isoWeekDay = translateWeekDayStringToISOWeekDay(weekDay);
-    var startTime = addLeadingZero(openingHours.split("-")[0]);
-    var endTime = openingHours.split("-")[1];
-    var shifts = [{ startTime, endTime }];
-    return {
-      isoWeekDay,
-      shifts: shifts,
-    }
-}
-
-function createClinicTimeSlots(periodsConfiguration) {
-  var toDate = dayjs()
-    .add(1, "days")
- //   .utcOffset(2, true)
+function setDateDuration(daysStart, daysEnd) {
+  var startDate = dayjs()
+    .add(daysStart ? daysStart : 0, "days")
     .startOf("date")
-    .format("YYYY-MM-DDTHH:mm:ss.SSSZ");
-  var fromDate = dayjs()
- //   .utcOffset(2, true)
-    .startOf("date")
-    .format("YYYY-MM-DDTHH:mm:ss.SSSZ");
-  var clinicTimeSlots = [];
-  var clinicTimeSlots = TimeSlotsFinder.getAvailableTimeSlotsInCalendar({
-    configuration: {
-      timeSlotDuration: 30,
-      availablePeriods: [periodsConfiguration],
-      slotStartMinuteStep: 1,
-      //timeZone: "Europe/Stockholm",
-      timeZone: "Africa/Abidjan",
-    },
-    from: dayjs(fromDate).toDate(),
-    to: dayjs(toDate).toDate(),
-  });
-  return clinicTimeSlots;
+    .format(`YYYY-MM-DDTHH:mm:ss.SSSZ`);
+  var endDate = dayjs()
+    .add(daysEnd, "days")
+    .endOf("date")
+    .format(`YYYY-MM-DDTHH:mm:ss.SSSZ`);
+  return { startDate: startDate, endDate: endDate };
 }
 
-const insertTimeSlots = (timeSlots) => {
+function scheduleFika(totalTimeSlots, openTime) {
+  var breakSlot = dayjs(openTime).add((totalTimeSlots * 60) / 4, "minutes");
+  return breakSlot;
+}
+
+function scheduleLunch(totalTimeSlots, openTime) {
+  var lunch = [];
+  var breakSlot = dayjs(openTime).add((totalTimeSlots * 60) / 2, "minutes");
+  lunch.push(breakSlot);
+  breakSlot = dayjs(openTime).add((totalTimeSlots * 60) / 2 + 30, "minutes");
+  lunch.push(breakSlot);
+  return lunch;
+}
+
+function isBreak(openTime, breaks) {
+  return breaks.find((breakSlot) => dayjs(openTime).isSame(breakSlot));
+}
+
+function insertTimeSlots(timeSlots) {
   timeSlotModel.insertMany(timeSlots, (err, docs) => {
     if (err) {
       console.log(err);
     } else {
-      console.log(docs);
+      console.log("Successfully inserted time slots");
     }
   });
-};
-
-function translateWeekDayStringToISOWeekDay(weekDayString) {
-  switch (weekDayString) {
-    case "monday":
-      return 1;
-    case "tuesday":
-      return 2;
-    case "wednesday":
-      return 3;
-    case "thursday":
-      return 4;
-    case "friday":
-      return 5;
-    case "saturday":
-      return 6;
-    case "sunday":
-      return 7;
-    default:
-      return 0;
-  }
 }
 
 function addLeadingZero(time) {
