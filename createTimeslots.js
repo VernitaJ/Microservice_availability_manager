@@ -77,7 +77,14 @@ function setDateDuration(daysStart, daysEnd) {
 }
 
 function scheduleFika(totalTimeSlots, openTime) {
-  var breakSlot = dayjs(openTime).add((totalTimeSlots * 60) / 4, "minutes");
+  if (((totalTimeSlots * 60) / 4) % 2 == 0) {
+    var breakSlot = dayjs(openTime).add((totalTimeSlots * 60) / 4, "minutes");
+  } else {
+    var breakSlot = dayjs(openTime).add(
+      ((totalTimeSlots + 1) * 60) / 4,
+      "minutes"
+    );
+  }
   return breakSlot;
 }
 
