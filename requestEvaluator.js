@@ -1,4 +1,4 @@
-const clinicTimeSlotGenerator = require("./createTimeslots.js");
+const clinicTimeSlotGenerator = require("./createTimeSlots.js");
 const handleBookingRequest = require("./bookingRequestHandler.js");
 const handleFrontendRequest = require("./frontendRequestHandler.js");
 
